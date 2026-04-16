@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
-import { Zap, Facebook, Twitter, Instagram, Linkedin, Send } from 'lucide-react'
+import { Zap, Twitter, Instagram, Linkedin, Send, Briefcase } from 'lucide-react'
 
 const NEWSLETTER_WEBHOOK =
   process.env.NEXT_PUBLIC_NEWSLETTER_WEBHOOK ||
@@ -49,15 +49,19 @@ export default function Footer() {
               </span>
             </Link>
             <p className="text-neutral-400 text-sm leading-relaxed mb-5">
-              The premier agency for AI automation, consulting, and app development. Helping businesses scale through
-              intelligent systems.
+              The premier agency for AI automation, consulting, and app development. Helping
+              businesses scale through intelligent systems.
             </p>
-            <div className="flex gap-3">
+            <div className="flex gap-3 flex-wrap">
               {[
                 { icon: Linkedin, href: 'https://linkedin.com/in/israeldare', label: 'LinkedIn' },
                 { icon: Twitter, href: 'https://x.com/izzytechub', label: 'X (Twitter)' },
                 { icon: Instagram, href: 'https://instagram.com/izzytechub', label: 'Instagram' },
-                { icon: Facebook, href: 'https://facebook.com/izzytechub', label: 'Facebook' },
+                {
+                  icon: Briefcase,
+                  href: 'https://www.upwork.com/freelancers/~010297ccb4983d90e7',
+                  label: 'Upwork',
+                },
               ].map(({ icon: Icon, href, label }) => (
                 <a
                   key={label}
@@ -65,6 +69,7 @@ export default function Footer() {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={label}
+                  title={label}
                   className="w-8 h-8 rounded-lg bg-neutral-900 hover:bg-brand-600 flex items-center justify-center text-neutral-400 hover:text-white transition-all"
                 >
                   <Icon className="w-4 h-4" />
@@ -108,6 +113,18 @@ export default function Footer() {
                 </li>
               ))}
             </ul>
+            {/* Upwork */}
+            <div className="mt-5">
+              <a
+                href="https://www.upwork.com/freelancers/~010297ccb4983d90e7"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#14a800]/10 border border-[#14a800]/30 hover:border-[#14a800]/60 rounded-lg text-[#14a800] text-xs font-semibold transition-all"
+              >
+                <Briefcase className="w-3.5 h-3.5" />
+                Hire on Upwork
+              </a>
+            </div>
           </div>
 
           {/* Newsletter */}
@@ -134,6 +151,22 @@ export default function Footer() {
             </form>
             {status === 'success' && <p className="text-green-400 text-xs mt-2">Subscribed!</p>}
             {status === 'error' && <p className="text-red-400 text-xs mt-2">Error. Please try again.</p>}
+
+            {/* Contact quick info */}
+            <div className="mt-5 space-y-1.5">
+              <a
+                href="mailto:izzytechub@gmail.com"
+                className="block text-neutral-500 hover:text-neutral-300 text-xs transition-colors"
+              >
+                izzytechub@gmail.com
+              </a>
+              <a
+                href="tel:+14245460129"
+                className="block text-neutral-500 hover:text-neutral-300 text-xs transition-colors"
+              >
+                +1 424 546 0129
+              </a>
+            </div>
           </div>
         </div>
 

@@ -40,16 +40,10 @@ export default function ContactPage() {
                 <div>
                   <h3 className="text-white font-bold mb-1">Email Us</h3>
                   <a
-                    href="mailto:izzy@izzytechub.com"
+                    href="mailto:izzytechub@gmail.com"
                     className="text-neutral-400 hover:text-brand-400 text-sm transition-colors block"
                   >
-                    izzy@izzytechub.com
-                  </a>
-                  <a
-                    href="mailto:izzy.marketing.hub@gmail.com"
-                    className="text-neutral-400 hover:text-brand-400 text-sm transition-colors block"
-                  >
-                    izzy.marketing.hub@gmail.com
+                    izzytechub@gmail.com
                   </a>
                 </div>
               </div>
@@ -67,15 +61,7 @@ export default function ContactPage() {
                     href="tel:+14245460129"
                     className="text-neutral-400 hover:text-brand-400 text-sm transition-colors block"
                   >
-                    +1 424 546 0129 (US)
-                  </a>
-                  <a
-                    href="https://wa.me/2348145349114"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-neutral-400 hover:text-brand-400 text-sm transition-colors block"
-                  >
-                    +234 814 534 9114 (NG / WhatsApp)
+                    +1 424 546 0129
                   </a>
                   <p className="text-neutral-600 text-xs mt-1">Available Mon–Fri, 9am – 5pm WAT</p>
                 </div>
@@ -84,7 +70,7 @@ export default function ContactPage() {
 
             {/* WhatsApp direct */}
             <a
-              href="https://wa.me/2348145349114"
+              href="https://wa.me/14245460129"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-3 p-5 bg-green-900/20 border border-green-800/40 rounded-xl hover:border-green-600/60 transition-all group"

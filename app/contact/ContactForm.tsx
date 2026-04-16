@@ -14,10 +14,6 @@ const SERVICES = [
   'Other',
 ]
 
-const CONTACT_WEBHOOK =
-  process.env.NEXT_PUBLIC_CONTACT_WEBHOOK ||
-  'https://n8n-digitalmavericks-u48043.vm.elestio.app/webhook/d4aa2064-907b-443b-a094-d2f6277e8cde'
-
 export default function ContactForm() {
   const [form, setForm] = useState({
     firstName: '',
@@ -30,20 +26,23 @@ export default function ContactForm() {
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [errorMsg, setErrorMsg] = useState('')
 
-  const set = (field: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
-    setForm((prev) => ({ ...prev, [field]: e.target.value }))
+  const set =
+    (field: keyof typeof form) =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
+      setForm((prev) => ({ ...prev, [field]: e.target.value }))
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setStatus('loading')
     setErrorMsg('')
     try {
-      const res = await fetch(CONTACT_WEBHOOK, {
+      const res = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, source: 'Contact Page' }),
+        body: JSON.stringify(form),
       })
-      if (!res.ok) throw new Error('Submission failed')
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Submission failed')
       setStatus('success')
       setForm({ firstName: '', lastName: '', email: '', phone: '', service: '', message: '' })
     } catch (err) {
@@ -59,8 +58,11 @@ export default function ContactForm() {
           <CheckCircle className="w-8 h-8 text-green-400" />
         </div>
         <h3 className="text-2xl font-bold text-white mb-2">Message Sent!</h3>
-        <p className="text-neutral-400 mb-6 max-w-sm">
-          Thanks for reaching out. Israel or a team member will get back to you within 24 hours.
+        <p className="text-neutral-400 mb-2 max-w-sm">
+          Thanks for reaching out. A confirmation email is on its way to you.
+        </p>
+        <p className="text-neutral-500 text-sm mb-6 max-w-sm">
+          Israel or a team member will get back to you within 24 hours.
         </p>
         <button
           onClick={() => setStatus('idle')}
@@ -138,9 +140,13 @@ export default function ContactForm() {
           required
           className="w-full px-4 py-3 bg-neutral-900 border border-neutral-800 rounded-lg text-white focus:outline-none focus:border-brand-500 transition-colors appearance-none"
         >
-          <option value="" disabled>Select a service...</option>
+          <option value="" disabled>
+            Select a service...
+          </option>
           {SERVICES.map((s) => (
-            <option key={s} value={s}>{s}</option>
+            <option key={s} value={s}>
+              {s}
+            </option>
           ))}
         </select>
       </div>
@@ -159,9 +165,7 @@ export default function ContactForm() {
         />
       </div>
 
-      {status === 'error' && (
-        <p className="text-red-400 text-sm">{errorMsg}</p>
-      )}
+      {status === 'error' && <p className="text-red-400 text-sm">{errorMsg}</p>}
 
       <button
         type="submit"
@@ -180,6 +184,10 @@ export default function ContactForm() {
           </>
         )}
       </button>
+
+      <p className="text-neutral-600 text-xs text-center">
+        You'll receive a confirmation email immediately after submitting.
+      </p>
     </form>
   )
 }

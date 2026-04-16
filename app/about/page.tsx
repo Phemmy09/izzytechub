@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Flame, TrendingUp, Globe, Trophy, Users, ArrowRight, Linkedin, ExternalLink } from 'lucide-react'
+import { Flame, TrendingUp, Globe, Trophy, Users, ArrowRight, Briefcase } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'About Israel O. Dare',
@@ -61,12 +61,12 @@ export default function AboutPage() {
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </Link>
                 <a
-                  href="https://linkedin.com/in/israeldare"
+                  href="https://www.upwork.com/freelancers/~010297ccb4983d90e7"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn-secondary inline-flex items-center gap-2"
                 >
-                  <Linkedin className="w-4 h-4" /> LinkedIn Profile
+                  <Briefcase className="w-4 h-4" /> Upwork Profile
                 </a>
               </div>
             </div>
