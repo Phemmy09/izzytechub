@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { MessageCircle, X, Send, Bot, User, Loader2, ChevronRight } from 'lucide-react'
 
 interface Message {
@@ -34,6 +34,7 @@ Before we dive in, I'd love to know a bit about you so I can give you the best h
 What's your **first name**?`
 
 const WEBHOOK_URL = process.env.NEXT_PUBLIC_NEWSLETTER_WEBHOOK as string
+const WHATSAPP_DELAY_MS = 5 * 60 * 1000 // 5 minutes
 
 export default function ChatWidget() {
   const [open, setOpen] = useState(false)
@@ -45,8 +46,17 @@ export default function ChatWidget() {
   const [leadStep, setLeadStep] = useState<LeadStep>('name')
   const [lead, setLead] = useState<Lead>({ name: '', email: '', phone: '', service: '' })
   const [showServicePicker, setShowServicePicker] = useState(false)
+
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  // Keep a live ref to messages so the delayed WhatsApp report captures the full transcript
+  const messagesRef = useRef<Message[]>(messages)
+  const whatsappTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const whatsappSentRef = useRef(false)
+
+  useEffect(() => {
+    messagesRef.current = messages
+  }, [messages])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -56,25 +66,49 @@ export default function ChatWidget() {
     if (open) setTimeout(() => inputRef.current?.focus(), 100)
   }, [open])
 
+  // Clean up timer on unmount (safety)
+  useEffect(() => () => { if (whatsappTimerRef.current) clearTimeout(whatsappTimerRef.current) }, [])
+
   const addMessage = (role: Message['role'], content: string) => {
     setMessages((prev) => [...prev, { role, content }])
   }
 
-  async function notifyWhatsApp(completedLead: Lead, firstQuestion?: string) {
+  const sendWhatsAppReport = useCallback((completedLead: Lead) => {
+    if (whatsappSentRef.current) return
+    whatsappSentRef.current = true
+
+    const transcript = messagesRef.current
+      .map((m) => `[${m.role === 'user' ? completedLead.name : 'Izzy (AI)'}]: ${m.content}`)
+      .join('\n\n')
+
+    fetch(WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'chatbot_report',
+        name: completedLead.name,
+        email: completedLead.email,
+        phone: completedLead.phone || 'Not provided',
+        service: completedLead.service,
+        transcript,
+        messageCount: messagesRef.current.length,
+        source: 'izzytechub.com chatbot',
+        reportedAt: new Date().toISOString(),
+      }),
+    }).catch(() => { /* Silent */ })
+  }, [])
+
+  function scheduleWhatsAppReport(completedLead: Lead) {
+    if (whatsappTimerRef.current) return // already scheduled
+    whatsappTimerRef.current = setTimeout(() => sendWhatsAppReport(completedLead), WHATSAPP_DELAY_MS)
+  }
+
+  async function sendLeadEmails(completedLead: Lead) {
     try {
-      await fetch(WEBHOOK_URL, {
+      await fetch('/api/chat-lead', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type: 'chatbot_lead',
-          name: completedLead.name,
-          email: completedLead.email,
-          phone: completedLead.phone || 'Not provided',
-          service: completedLead.service,
-          firstQuestion: firstQuestion || 'Started chatting',
-          source: 'izzytechub.com chatbot',
-          timestamp: new Date().toISOString(),
-        }),
+        body: JSON.stringify(completedLead),
       })
     } catch {
       // Silent — don't block user experience
@@ -170,7 +204,11 @@ export default function ChatWidget() {
 
     addMessage('user', service)
 
-    await notifyWhatsApp(completedLead)
+    // Send confirmation + owner notification emails immediately
+    sendLeadEmails(completedLead)
+
+    // Schedule WhatsApp report after 5 minutes with full transcript
+    scheduleWhatsAppReport(completedLead)
 
     setTimeout(() => {
       addMessage(
@@ -192,13 +230,6 @@ export default function ChatWidget() {
 
     addMessage('user', value)
     const updatedMessages: Message[] = [...messages, { role: 'user', content: value }]
-
-    // Notify webhook with question on first user message after lead collection
-    const isFirstQuestion = messages.filter((m) => m.role === 'user').length === 3
-    if (isFirstQuestion) {
-      notifyWhatsApp(lead, value)
-    }
-
     await streamResponse(updatedMessages, lead)
   }
 
@@ -256,8 +287,10 @@ export default function ChatWidget() {
 
       {/* Chat panel */}
       {open && (
-        <div className="fixed bottom-24 right-6 z-50 w-[360px] max-w-[calc(100vw-3rem)] bg-neutral-950 border border-neutral-800 rounded-2xl shadow-2xl shadow-black/60 flex flex-col overflow-hidden"
-          style={{ height: '520px' }}>
+        <div
+          className="fixed bottom-24 right-6 z-50 w-[360px] max-w-[calc(100vw-3rem)] bg-neutral-950 border border-neutral-800 rounded-2xl shadow-2xl shadow-black/60 flex flex-col overflow-hidden"
+          style={{ height: '520px' }}
+        >
           {/* Header */}
           <div className="bg-red-600 px-4 py-3 flex items-center gap-3">
             <div className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center">
@@ -315,10 +348,13 @@ export default function ChatWidget() {
               onKeyDown={handleKeyDown}
               disabled={loading || showServicePicker}
               placeholder={
-                leadStep === 'name' ? 'Your first name…'
-                : leadStep === 'email' ? 'your@email.com'
-                : leadStep === 'phone' ? 'Phone or type "skip"'
-                : 'Ask me anything…'
+                leadStep === 'name'
+                  ? 'Your first name…'
+                  : leadStep === 'email'
+                  ? 'your@email.com'
+                  : leadStep === 'phone'
+                  ? 'Phone or type "skip"'
+                  : 'Ask me anything…'
               }
               className="flex-1 bg-neutral-900 border border-neutral-700 rounded-xl px-3.5 py-2 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-red-500/60 disabled:opacity-50"
             />
