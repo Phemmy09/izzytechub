@@ -3,8 +3,6 @@ import { readFileSync } from 'fs'
 import { join } from 'path'
 import { NextRequest } from 'next/server'
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
-
 function getKnowledgeBase(): string {
   try {
     return readFileSync(join(process.cwd(), 'lib/chatbot-knowledge.md'), 'utf-8')
@@ -14,6 +12,7 @@ function getKnowledgeBase(): string {
 }
 
 export async function POST(req: NextRequest) {
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
   try {
     const { messages, lead } = await req.json()
 
